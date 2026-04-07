@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lesetraining für Erstklässler</title>
+  <style>
+    :root {
+      --bg: #fef9ef;
+      --card: #fff;
+      --text: #2b2b2b;
+      --accent: #1976d2;
+      --accent-soft: #e3f2fd;
+      --btn: #2e7d32;
+      --btn-hover: #1b5e20;
+      --btn-pause: #546e7a;
+      --btn-pause-hover: #37474f;
+      --btn-next: #ef6c00;
+      --btn-next-hover: #e65100;
+      --border: #f1e3bf;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: "Comic Sans MS", "Trebuchet MS", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #fff8e1, #f3f9ff);
+      color: var(--text);
+      padding: 1rem;
+    }
+
+    .app {
+      width: min(900px, 100%);
+      background: var(--card);
+      border: 3px solid var(--border);
+      border-radius: 20px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.8rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.2rem, 2.6vw, 1.9rem);
+    }
+
+    .progress {
+      font-size: 1rem;
+      font-weight: 700;
+      background: #fff3cd;
+      border-radius: 999px;
+      padding: 0.3rem 0.8rem;
+    }
+
+    .text-box {
+      background: #fffdf7;
+      border: 2px dashed #ffd54f;
+      border-radius: 14px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      line-height: 1.9;
+      font-size: clamp(1.05rem, 2.1vw, 1.3rem);
+      min-height: 140px;
+    }
+
+    .word {
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 0.05rem 0.18rem;
+      transition: background-color 120ms ease, color 120ms ease;
+    }
+
+    .word.selected {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 0.7rem;
+      margin: 1rem 0 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    .controls.hidden {
+      display: none;
+    }
+
+    button {
+      border: 0;
+      padding: 0.7rem 1.1rem;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    #playBtn {
+      background: var(--btn);
+    }
+
+    #playBtn:hover {
+      background: var(--btn-hover);
+    }
+
+    #pauseBtn {
+      background: var(--btn-pause);
+    }
+
+    #pauseBtn:hover {
+      background: var(--btn-pause-hover);
+    }
+
+    #stopBtn {
+      background: #c62828;
+    }
+
+    #stopBtn:hover {
+      background: #8e0000;
+    }
+
+    #skipBtn {
+      background: #5d4037;
+    }
+
+    #skipBtn:hover {
+      background: #3e2723;
+    }
+
+    .quiz {
+      display: none;
+      margin-top: 1rem;
+      border-top: 2px solid #eee;
+      padding-top: 1rem;
+    }
+
+    .quiz.show {
+      display: block;
+    }
+
+    .question {
+      margin-bottom: 1rem;
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 0.85rem;
+    }
+
+    .question p {
+      margin-top: 0;
+      font-weight: 700;
+    }
+
+    label {
+      display: block;
+      margin: 0.3rem 0;
+      cursor: pointer;
+    }
+
+    .result {
+      margin-top: 0.75rem;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    #checkBtn {
+      background: var(--btn-next);
+    }
+
+    #checkBtn:hover {
+      background: var(--btn-next-hover);
+    }
+
+    #nextBtn {
+      display: none;
+      margin-top: 0.5rem;
+      background: #6a1b9a;
+    }
+
+    #nextBtn.show {
+      display: inline-block;
+    }
+
+    #restartBtn {
+      background: #1565c0;
+      margin-top: 0.7rem;
+    }
+
+    #restartBtn:hover {
+      background: #0d47a1;
+    }
+
+    .summary {
+      display: none;
+      margin-top: 1rem;
+      border-top: 2px solid #eee;
+      padding-top: 1rem;
+      background: #f6fff8;
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .summary.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="top-row">
+      <h1>Lesetraining</h1>
+      <div class="progress" id="progressText">Text 1 von 10</div>
+    </div>
+
+    <section class="text-box" id="lesetext" aria-label="Lesetext"></section>
+
+    <div class="controls" id="controls">
+      <button id="playBtn" type="button">Play</button>
+      <button id="pauseBtn" type="button">Pause</button>
+      <button id="stopBtn" type="button">Stopp</button>
+      <button id="skipBtn" type="button">Überspringen</button>
+    </div>
+
+    <section class="quiz" id="quiz" aria-live="polite"></section>
+
+    <section class="summary" id="summary" aria-live="polite"></section>
+  </main>
+
+  <script>
+    const lessons = [
+      {
+        sentences: [
+          "Mia ist heute im Park.",
+          "Die Sonne scheint warm.",
+          "Sie sieht einen kleinen Hund.",
+          "Der Hund spielt mit einem Ball.",
+          "Mia liest danach ein Buch auf der Bank."
+        ],
+        questions: [
+          {
+            text: "Wo ist Mia?",
+            options: ["Im Park", "In der Schule", "Im Zoo"],
+            correct: "Im Park"
+          },
+          {
+            text: "Was macht Mia am Ende?",
+            options: ["Sie rennt", "Sie liest ein Buch", "Sie schläft"],
+            correct: "Sie liest ein Buch"
+          }
+        ]
+      },
+      {
+        sentences: [
+          "Tom steht in der Küche.",
+          "Er schneidet einen roten Apfel.",
+          "Seine Schwester holt zwei Teller.",
+          "Beide trinken ein Glas Wasser.",
+          "Dann essen sie den Apfel zusammen."
+        ],
+        questions: [
+          {
+            text: "Wo steht Tom?",
+            options: ["Im Bad", "In der Küche", "Im Garten"],
+            correct: "In der Küche"
+          },
+          {
+            text: "Was schneiden sie?",
+            options: ["Eine Gurke", "Einen Apfel", "Ein Brot"],
+            correct: "Einen Apfel"
+          }
+        ]
+      },
+      {
+        sentences: [
+          "Lena geht zur Schule.",
+          "Sie trägt einen gelben Ranzen.",
+          "Ihr Freund Ben wartet am Tor.",
+          "Sie laufen zusammen in die Klasse.",
+          "Die Lehrerin sagt freundlich Guten Morgen."
+        ],
+        questions: [
+          {
+            text: "Welche Farbe hat der Ranzen?",
+            options: ["Gelb", "Blau", "Grün"],
+            correct: "Gelb"
+          },
+          {
+            text: "Wer wartet am Tor?",
+            options: ["Ben", "Oma", "Ein Hund"],
+            correct: "Ben"
+          }
+        ]
+      },
+      {
+        sentences: [
+          "Paul fährt mit dem Bus.",
+          "Er sitzt am Fenster.",
+          "Draußen sieht er einen großen Baum.",
+          "An der nächsten Haltestelle steigt er aus.",
+          "Dann winkt er seiner Mutter zu."
+        ],
+        questions: [
+          {
+            text: "Womit fährt Paul?",
+            options: ["Mit dem Zug", "Mit dem Bus", "Mit dem Fahrrad"],
+            correct: "Mit dem Bus"
+          },
+          {
+            text: "Wo sitzt Paul?",
+            options: ["Am Fenster", "Ganz hinten", "Auf dem Boden"],
+            correct: "Am Fenster"
+          }
+        ]
+      },
+      {
+        sentences: [
+          "Sara ist im Garten.",
+          "Sie gießt die Blumen mit einer Kanne.",
+          "Eine Biene summt leise.",
+          "Sara riecht an einer roten Rose.",
+          "Sie freut sich über die schönen Farben."
+        ],
+        questions: [
+          {
+            text: "Was gießt Sara?",
+            options: ["Die Blumen", "Das Auto", "Das Dach"],
+            correct: "Die Blumen"
+          },
+          {
+            text: "Welche Blume riecht Sara?",
+            options: ["Eine Tulpe", "Eine Rose", "Eine Sonnenblume"],
+            correct: "Eine Rose"
+          }
+        ]
+      },
+      {
+        sentences: [
+          "Jonas baut einen Turm aus Klötzen.",
+          "Der Turm wird sehr hoch.",
+          "Ein Klotz fällt herunter.",
+          "Jonas lacht und baut weiter.",
+          "Am Ende steht ein neuer Turm."
+        ],
+        questions: [
+          {
+            text: "Woraus baut Jonas den Turm?",
+            options: ["Aus Sand", "Aus Klötzen", "Aus Papier"],
+            correct: "Aus Klötzen"
+          },
+          {
+            text: "Was passiert mit einem Klotz?",
+            options: ["Er fällt herunter", "Er fliegt weg", "Er wird blau"],
+            correct: "Er fällt herunter"
+          }
+        ]
+      },
+      {
+        sentences: [
+          "Emil besucht seine Oma.",
+          "Oma backt kleine Kekse.",
+          "Emil rührt den Teig mit einem Löffel.",
+          "Die Küche duftet süß.",
+          "Später essen beide zwei warme Kekse."
+        ],
+        questions: [
+          {
+            text: "Wen besucht Emil?",
+            options: ["Seinen Onkel", "Seine Oma", "Seinen Lehrer"],
+            correct: "Seine Oma"
+          },
+          {
+            text: "Was backt Oma?",
+            options: ["Pizza", "Kekse", "Brot"],
+            correct: "Kekse"
+          }
+        ]
+      },
+      {
+        sentences: [
+          "Nora hat Musikunterricht.",
+          "Sie hält eine kleine Trommel.",
+          "Der Lehrer klatscht den Takt.",
+          "Nora spielt ruhig und genau.",
+          "Am Ende bekommt sie ein Lob."
+        ],
+        questions: [
+          {
+            text: "Welchen Unterricht hat Nora?",
+            options: ["Sport", "Musik", "Mathe"],
+            correct: "Musik"
+          },
+          {
+            text: "Was hält Nora in der Hand?",
+            options: ["Eine Flöte", "Eine Trommel", "Eine Gitarre"],
+            correct: "Eine Trommel"
+          }
+        ]
+      },
+      {
+        sentences: [
+          "Ali geht mit seinem Vater einkaufen.",
+          "Sie nehmen einen Korb.",
+          "Ali legt Milch und Brot hinein.",
+          "An der Kasse sagt er Danke.",
+          "Zu Hause räumen sie alles ein."
+        ],
+        questions: [
+          {
+            text: "Mit wem geht Ali einkaufen?",
+            options: ["Mit seiner Schwester", "Mit seinem Vater", "Mit seinem Freund"],
+            correct: "Mit seinem Vater"
+          },
+          {
+            text: "Was legt Ali in den Korb?",
+            options: ["Milch und Brot", "Äpfel und Saft", "Nudeln und Käse"],
+            correct: "Milch und Brot"
+          }
+        ]
+      },
+      {
+        sentences: [
+          "Mila sitzt abends im Bett.",
+          "Ihre Lampe leuchtet weich.",
+          "Sie hört eine kurze Gute-Nacht-Geschichte.",
+          "Dann legt sie ihr Buch zur Seite.",
+          "Mila schließt die Augen und schläft ein."
+        ],
+        questions: [
+          {
+            text: "Wo sitzt Mila?",
+            options: ["Im Bett", "Auf dem Boden", "Am Tisch"],
+            correct: "Im Bett"
+          },
+          {
+            text: "Was macht Mila am Ende?",
+            options: ["Sie tanzt", "Sie schläft ein", "Sie malt"],
+            correct: "Sie schläft ein"
+          }
+        ]
+      }
+    ];
+
+    const textContainer = document.getElementById("lesetext");
+    const controls = document.getElementById("controls");
+    const playBtn = document.getElementById("playBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const skipBtn = document.getElementById("skipBtn");
+    const quiz = document.getElementById("quiz");
+    const summary = document.getElementById("summary");
+    const progressText = document.getElementById("progressText");
+
+    let currentIndex = 0;
+    let totalPoints = 0;
+    let answeredLessons = 0;
+    let skippedLessons = 0;
+    let lessonChecked = false;
+    let readSession = 0;
+
+    function lessonText(index) {
+      return lessons[index].sentences.join(" ");
+    }
+
+    function cancelSpeech() {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function getGermanVoice() {
+      const voices = window.speechSynthesis.getVoices();
+      return (
+        voices.find((voice) => voice.lang.toLowerCase().startsWith("de-de")) ||
+        voices.find((voice) => voice.lang.toLowerCase().startsWith("de")) ||
+        null
+      );
+    }
+
+    function renderClickableText() {
+      const tokens = lessonText(currentIndex).split(/(\s+)/);
+      textContainer.innerHTML = "";
+
+      for (const token of tokens) {
+        if (/^\s+$/.test(token)) {
+          textContainer.append(document.createTextNode(token));
+          continue;
+        }
+
+        const span = document.createElement("span");
+        span.className = "word";
+        span.textContent = token;
+        span.setAttribute("role", "button");
+        span.setAttribute("tabindex", "0");
+        span.setAttribute("aria-label", `Wort: ${token}`);
+
+        const toggleSelect = () => span.classList.toggle("selected");
+        span.addEventListener("click", toggleSelect);
+        span.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            toggleSelect();
+          }
+        });
+
+        textContainer.append(span);
+      }
+    }
+
+    function renderQuiz() {
+      const lesson = lessons[currentIndex];
+      quiz.innerHTML = "";
+      lessonChecked = false;
+
+      lesson.questions.forEach((question, qIdx) => {
+        const block = document.createElement("div");
+        block.className = "question";
+
+        const title = document.createElement("p");
+        title.textContent = `${qIdx + 1}. ${question.text}`;
+        block.appendChild(title);
+
+        question.options.forEach((option) => {
+          const id = `q${currentIndex}_${qIdx}_${option.replace(/\s+/g, "_")}`;
+          const label = document.createElement("label");
+
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `q${qIdx}`;
+          input.value = option;
+          input.id = id;
+
+          label.appendChild(input);
+          label.append(` ${option}`);
+          block.appendChild(label);
+        });
+
+        quiz.appendChild(block);
+      });
+
+      const checkBtn = document.createElement("button");
+      checkBtn.id = "checkBtn";
+      checkBtn.type = "button";
+      checkBtn.textContent = "Antworten prüfen";
+
+      const nextBtn = document.createElement("button");
+      nextBtn.id = "nextBtn";
+      nextBtn.type = "button";
+      nextBtn.textContent = currentIndex < lessons.length - 1 ? "Nächster Text" : "Gesamtauswertung";
+
+      const result = document.createElement("p");
+      result.className = "result";
+      result.id = "result";
+
+      checkBtn.addEventListener("click", () => checkAnswers(result, nextBtn));
+      nextBtn.addEventListener("click", goNext);
+
+      quiz.appendChild(checkBtn);
+      quiz.appendChild(nextBtn);
+      quiz.appendChild(result);
+    }
+
+    function showLesson() {
+      readSession += 1;
+      cancelSpeech();
+      progressText.textContent = `Text ${currentIndex + 1} von ${lessons.length}`;
+      renderClickableText();
+      renderQuiz();
+      quiz.classList.remove("show");
+      summary.classList.remove("show");
+      summary.innerHTML = "";
+      controls.classList.remove("hidden");
+    }
+
+    function speakSentenceBySentence(sentences, sentenceIndex, sessionId, voice) {
+      if (sessionId !== readSession) return;
+
+      if (sentenceIndex >= sentences.length) {
+        quiz.classList.add("show");
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(sentences[sentenceIndex]);
+      utterance.lang = "de-DE";
+      utterance.rate = sentenceIndex % 2 === 0 ? 0.38 : 0.43;
+      utterance.pitch = sentenceIndex % 2 === 0 ? 1.2 : 1.08;
+      utterance.volume = 1;
+      if (voice) utterance.voice = voice;
+
+      utterance.onend = () => {
+        window.setTimeout(() => {
+          speakSentenceBySentence(sentences, sentenceIndex + 1, sessionId, voice);
+        }, 350);
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function readTextExpressive() {
+      if (!("speechSynthesis" in window)) {
+        alert("Dein Browser unterstützt Vorlesen leider nicht.");
+        return;
+      }
+
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+        return;
+      }
+
+      if (window.speechSynthesis.speaking) return;
+
+      readSession += 1;
+      const currentSession = readSession;
+      window.speechSynthesis.cancel();
+      const voice = getGermanVoice();
+      speakSentenceBySentence(lessons[currentIndex].sentences, 0, currentSession, voice);
+    }
+
+    function pauseReading() {
+      if ("speechSynthesis" in window && window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+      }
+    }
+
+    function stopReading() {
+      readSession += 1;
+      cancelSpeech();
+    }
+
+    function skipLesson() {
+      readSession += 1;
+      cancelSpeech();
+
+      if (!lessonChecked) {
+        skippedLessons += 1;
+      }
+
+      if (currentIndex < lessons.length - 1) {
+        currentIndex += 1;
+        showLesson();
+      } else {
+        showSummary();
+      }
+    }
+
+    function checkAnswers(resultEl, nextBtn) {
+      if (lessonChecked) return;
+
+      const lesson = lessons[currentIndex];
+      let points = 0;
+      const hints = [];
+
+      for (let i = 0; i < lesson.questions.length; i += 1) {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`)?.value;
+        const correct = lesson.questions[i].correct;
+
+        if (!selected) {
+          resultEl.textContent = "Bitte beantworte beide Fragen.";
+          resultEl.style.color = "#b71c1c";
+          return;
+        }
+
+        if (selected === correct) {
+          points += 1;
+        } else {
+          hints.push(`Frage ${i + 1}: Richtig ist ${correct}.`);
+        }
+      }
+
+      lessonChecked = true;
+      answeredLessons += 1;
+      totalPoints += points;
+
+      resultEl.textContent =
+        hints.length > 0
+          ? `Du hast ${points} von 2 Punkten. ${hints.join(" ")}`
+          : "Du hast 2 von 2 Punkten. Super gemacht!";
+      resultEl.style.color = points === 2 ? "#1b5e20" : "#0d47a1";
+      nextBtn.classList.add("show");
+    }
+
+    function showSummary() {
+      const maxPoints = lessons.length * 2;
+      const percent = Math.round((totalPoints / maxPoints) * 100);
+      const wrongAnswers = maxPoints - totalPoints;
+
+      summary.innerHTML = `
+        <h2>Gesamtauswertung</h2>
+        <p>Bearbeitete Texte: ${answeredLessons} von ${lessons.length}</p>
+        <p>Übersprungene Texte: ${skippedLessons}</p>
+        <p>Punkte: ${totalPoints} von ${maxPoints}</p>
+        <p>Richtige Antworten: ${totalPoints}</p>
+        <p>Falsche Antworten: ${wrongAnswers}</p>
+        <p>Trefferquote: ${percent}%</p>
+        <button id="restartBtn" type="button">Noch einmal von vorne</button>
+      `;
+
+      summary.classList.add("show");
+      quiz.classList.remove("show");
+      textContainer.textContent = "Du hast alle Lesetexte geschafft.";
+      progressText.textContent = "Fertig";
+      controls.classList.add("hidden");
+      readSession += 1;
+      cancelSpeech();
+
+      const restartBtn = document.getElementById("restartBtn");
+      restartBtn.addEventListener("click", restartFromBeginning);
+    }
+
+    function restartFromBeginning() {
+      readSession += 1;
+      cancelSpeech();
+      currentIndex = 0;
+      totalPoints = 0;
+      answeredLessons = 0;
+      skippedLessons = 0;
+      lessonChecked = false;
+      showLesson();
+    }
+
+    function goNext() {
+      if (currentIndex < lessons.length - 1) {
+        currentIndex += 1;
+        showLesson();
+      } else {
+        showSummary();
+      }
+    }
+
+    playBtn.addEventListener("click", readTextExpressive);
+    pauseBtn.addEventListener("click", pauseReading);
+    stopBtn.addEventListener("click", stopReading);
+    skipBtn.addEventListener("click", skipLesson);
+
+    showLesson();
+  </script>
+</body>
+</html>
