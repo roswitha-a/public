@@ -1,7 +1,2 @@
-# GitHub Pages Base URL
-
-https://roswitha-a.github.io/public/
-
-## Lese App
-
-https://roswitha-a.github.io/public/lese-app/
+[Lese App](https://roswitha-a.github.io/public/lese-app/)
+[Deutsch App](https://roswitha-a.github.io/public/deutsch-app/)
